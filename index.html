@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#c8362f">
+<title>XIRR / 年化報酬率 — Cash Flow Calculator</title>
+<style>
+  :root {
+    --bg: #faf8f4;
+    --surface: #ffffff;
+    --surface-2: #f5f2ec;
+    --ink: #1c1c1e;
+    --ink-soft: #4a4a4e;
+    --ink-mute: #86868b;
+    --line: #e6e2db;
+    --line-soft: #f0ece4;
+    --accent: #c8362f;
+    --accent-soft: #f6e3e1;
+    --accent-ink: #8a221d;
+    --gold: #b8852a;
+    --good: #2e7d52;
+    --bad: #b03a2e;
+    --shadow: 0 1px 2px rgba(28,28,30,0.04), 0 8px 24px rgba(28,28,30,0.06);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-lg: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; min-height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Microsoft JhengHei", "Hiragino Sans GB", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding: 24px 18px 80px;
+  }
+
+  .container { max-width: 880px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .title-block h1 {
+    font-size: clamp(22px, 4vw, 30px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .title-block h1 .accent {
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .title-block .subtitle {
+    font-size: 13px;
+    color: var(--ink-mute);
+    letter-spacing: 0.02em;
+  }
+
+  .top-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .lang-toggle {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px;
+    box-shadow: var(--shadow);
+  }
+  .lang-toggle button {
+    border: 0;
+    background: transparent;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+    font-family: inherit;
+  }
+  .lang-toggle button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .currency-select {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--ink-soft);
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2386868b' d='M5 6L0 0h10z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 26px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 6px;
+    overflow-x: auto;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex: 1 0 auto;
+    border: 0;
+    background: transparent;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: background .18s ease, color .18s ease;
+  }
+  .tab-btn:hover { background: var(--surface-2); }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .scenario {
+    display: none;
+  }
+  .scenario.active { display: block; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 22px 22px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .card h2 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .card .lede {
+    font-size: 13.5px;
+    color: var(--ink-mute);
+    margin-bottom: 18px;
+  }
+
+  details.explain {
+    margin-top: 12px;
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  details.explain summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--accent-ink);
+    list-style: none;
+    user-select: none;
+  }
+  details.explain summary::-webkit-details-marker { display: none; }
+  details.explain summary::before {
+    content: "›";
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform .18s ease;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  details.explain[open] summary::before { transform: rotate(90deg); }
+  details.explain p { margin-top: 8px; line-height: 1.55; }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 16px;
+  }
+  @media (max-width: 560px) {
+    .field-grid { grid-template-columns: 1fr; }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field label {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .field input[type="text"],
+  .field input[type="number"],
+  .field input[type="date"] {
+    background: var(--surface-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--ink);
+    transition: border-color .18s ease, background .18s ease;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  .cashflow-table {
+    margin-top: 6px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--line-soft);
+  }
+  .cf-head, .cf-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 36px;
+    gap: 10px;
+    padding: 8px 10px;
+    align-items: center;
+  }
+  .cf-head {
+    background: var(--surface-2);
+    font-size: 11.5px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+  .cf-row + .cf-row, .cf-head + .cf-row {
+    border-top: 1px solid var(--line-soft);
+  }
+  .cf-row input {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink);
+    width: 100%;
+  }
+  .cf-row input:focus { outline: none; border-color: var(--accent); }
+  .row-remove {
+    background: transparent;
+    border: 0;
+    color: var(--ink-mute);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+  }
+  .row-remove:hover { background: var(--accent-soft); color: var(--accent); }
+
+  .row-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    border: 0;
+    background: var(--surface-2);
+    color: var(--ink-soft);
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .18s ease, color .18s ease, transform .12s ease;
+  }
+  .btn:hover { background: var(--line); color: var(--ink); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-ink); color: #fff; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--line);
+  }
+
+  .compute-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+
+  .result-card {
+    background: linear-gradient(135deg, #fff 0%, var(--accent-soft) 100%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-top: 16px;
+  }
+  .result-card .label {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .result-card .value {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--accent-ink);
+    margin: 4px 0 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .result-card .interp {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .result-card.error {
+    background: #fff4f3;
+  }
+  .result-card.error .value { color: var(--bad); font-size: 20px; }
+
+  .secondary-result {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .secondary-result .chip {
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .chip .k {
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .chip .v {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+  }
+  .chip.good .v { color: var(--good); }
+  .chip.bad .v { color: var(--bad); }
+
+  table.sensitivity {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 14px;
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--line-soft);
+  }
+  table.sensitivity th, table.sensitivity td {
+    padding: 10px 12px;
+    text-align: right;
+    border-top: 1px solid var(--line-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  table.sensitivity th {
+    background: var(--surface-2);
+    color: var(--ink-mute);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-top: 0;
+  }
+  table.sensitivity th:first-child, table.sensitivity td:first-child { text-align: left; }
+  table.sensitivity tr.threshold td { background: var(--accent-soft); font-weight: 600; }
+  table.sensitivity tr.gain td:last-child { color: var(--good); }
+  table.sensitivity tr.loss td:last-child { color: var(--bad); }
+
+  .hint {
+    font-size: 12.5px;
+    color: var(--ink-mute);
+    margin-top: 6px;
+  }
+
+  .scenario-header {
+    margin-bottom: 14px;
+  }
+
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-top: 36px;
+    letter-spacing: 0.04em;
+  }
+
+  .recommendation {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    border-left: 3px solid var(--accent);
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .recommendation strong { color: var(--accent-ink); }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .slider-row input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+  }
+  .slider-row .slider-val {
+    min-width: 60px;
+    text-align: right;
+    font-weight: 600;
+    color: var(--accent-ink);
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="title-block">
+      <h1><span class="accent">XIRR</span> <span data-i18n="title.suffix">Cash-Flow Calculator</span></h1>
+      <div class="subtitle" data-i18n="subtitle">Annualized return · break-even rate · NPV · time-value of money</div>
+    </div>
+    <div class="top-controls">
+      <select class="currency-select" id="currency">
+        <option value="USD">USD $</option>
+        <option value="TWD">TWD NT$</option>
+        <option value="EUR">EUR €</option>
+        <option value="JPY">JPY ¥</option>
+        <option value="GBP">GBP £</option>
+        <option value="CNY">CNY ¥</option>
+        <option value="HKD">HKD HK$</option>
+        <option value="">— None —</option>
+      </select>
+      <div class="lang-toggle">
+        <button data-lang="en" class="active">EN</button>
+        <button data-lang="zh">中</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn active" data-scenario="plan" data-i18n="tab.plan">Plan vs Lump</button>
+    <button class="tab-btn" data-scenario="xirr" data-i18n="tab.xirr">XIRR · Cash Flows</button>
+    <button class="tab-btn" data-scenario="npv" data-i18n="tab.npv">NPV</button>
+    <button class="tab-btn" data-scenario="paynow" data-i18n="tab.paynow">Pay Now vs Later</button>
+    <button class="tab-btn" data-scenario="loan" data-i18n="tab.loan">Loan / Financing</button>
+  </nav>
+
+  <!-- Scenario 1: Payment Plan vs Lump Sum -->
+  <section class="scenario active" data-scenario="plan">
+    <div class="card">
+      <div class="scenario-header">
+        <h2 data-i18n="plan.title">Payment Plan vs Lump Sum</h2>
+        <div class="lede" data-i18n="plan.lede">At what annualized return rate does paying in installments break even with paying it all at once?</div>
+      </div>
+
+      <h3 style="font-size:13px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-weight:600;" data-i18n="plan.instLabel">Installment plan</h3>
+      <div class="cashflow-table">
+        <div class="cf-head">
+          <div data-i18n="col.date">Date</div>
+          <div data-i18n="col.amount">Amount</div>
+          <div></div>
+        </div>
+        <div id="plan-rows"></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn" id="plan-add" data-i18n="btn.addRow">+ Add installment</button>
+        <button class="btn btn-ghost" id="plan-fee-toggle" data-i18n="btn.toggleFee">Toggle fee row</button>
+      </div>
+
+      <h3 style="font-size:13px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;margin:22px 0 8px;font-weight:600;" data-i18n="plan.lumpLabel">Lump-sum alternative</h3>
+      <div class="field-grid">
+        <div class="field">
+          <label data-i18n="col.date">Date</label>
+          <input type="date" id="lump-date">
+        </div>
+        <div class="field">
+          <label data-i18n="col.amount">Amount</label>
+          <input type="number" id="lump-amount" step="0.01" placeholder="56030.00">
+        </div>
+      </div>
+
+      <div class="compute-row">
+        <button class="btn btn-primary" id="plan-compute" data-i18n="btn.compute">Compute break-even</button>
+        <span class="hint" data-i18n="plan.computeHint">Math: XIRR of (lump − plan) cash flows</span>
+      </div>
+
+      <div id="plan-result"></div>
+      <div id="plan-sensitivity"></div>
+
+      <details class="explain">
+        <summary data-i18n="explain.label">What does this mean?</summary>
+        <p data-i18n="plan.explain">If your spare cash can earn <em>more</em> than the break-even rate elsewhere, the installment plan wins — you keep money working longer. If it can earn <em>less</em>, paying the lump sum is cheaper. The break-even is the annualized return rate at which the two paths have identical present value.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Scenario 2: XIRR -->
+  <section class="scenario" data-scenario="xirr">
+    <div class="card">
+      <div class="scenario-header">
+        <h2 data-i18n="xirr.title">XIRR — Annualized Return of Irregular Cash Flows</h2>
+        <div class="lede" data-i18n="xirr.lede">Negative = money out (investment / cost). Positive = money in (proceeds / income). Need at least one of each.</div>
+      </div>
+
+      <div class="cashflow-table">
+        <div class="cf-head">
+          <div data-i18n="col.date">Date</div>
+          <div data-i18n="col.signedAmount">Amount (− out, + in)</div>
+          <div></div>
+        </div>
+        <div id="xirr-rows"></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn" id="xirr-add" data-i18n="btn.addRow">+ Add cash flow</button>
+      </div>
+
+      <div class="compute-row">
+        <button class="btn btn-primary" id="xirr-compute" data-i18n="btn.computeXirr">Compute XIRR</button>
+      </div>
+
+      <div id="xirr-result"></div>
+
+      <details class="explain">
+        <summary data-i18n="explain.label">What does this mean?</summary>
+        <p data-i18n="xirr.explain">XIRR is the constant annualized rate at which the present value of all your cash flows sums to zero. It is Excel's <code>XIRR</code> — the standard way to measure return on an irregular series like dividend reinvestment, real-estate ownership, or staged investments.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Scenario 3: NPV -->
+  <section class="scenario" data-scenario="npv">
+    <div class="card">
+      <div class="scenario-header">
+        <h2 data-i18n="npv.title">NPV — Net Present Value</h2>
+        <div class="lede" data-i18n="npv.lede">Given a discount rate (your hurdle / opportunity cost), what is this stream worth today?</div>
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label data-i18n="npv.rateLabel">Discount rate (annual, %)</label>
+          <input type="number" id="npv-rate" step="0.01" value="5" placeholder="5.00">
+        </div>
+        <div class="field">
+          <label data-i18n="npv.refLabel">Present-value reference date</label>
+          <input type="date" id="npv-ref">
+        </div>
+      </div>
+
+      <div class="cashflow-table" style="margin-top:16px;">
+        <div class="cf-head">
+          <div data-i18n="col.date">Date</div>
+          <div data-i18n="col.signedAmount">Amount (− out, + in)</div>
+          <div></div>
+        </div>
+        <div id="npv-rows"></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn" id="npv-add" data-i18n="btn.addRow">+ Add cash flow</button>
+      </div>
+
+      <div class="compute-row">
+        <button class="btn btn-primary" id="npv-compute" data-i18n="btn.computeNpv">Compute NPV</button>
+      </div>
+
+      <div id="npv-result"></div>
+
+      <details class="explain">
+        <summary data-i18n="explain.label">What does this mean?</summary>
+        <p data-i18n="npv.explain">NPV &gt; 0 means the stream beats your hurdle rate — the investment is worth doing. NPV &lt; 0 means you would do better putting the money elsewhere at the discount rate you chose.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Scenario 4: Pay Now vs Pay Later -->
+  <section class="scenario" data-scenario="paynow">
+    <div class="card">
+      <div class="scenario-header">
+        <h2 data-i18n="paynow.title">Pay Now vs Pay Later</h2>
+        <div class="lede" data-i18n="paynow.lede">Pay $X today, or $Y on a future date. What annualized rate does the delay implicitly charge / give you?</div>
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label data-i18n="paynow.nowAmount">Pay now (today)</label>
+          <input type="number" id="pn-now" step="0.01" placeholder="1000.00">
+        </div>
+        <div class="field">
+          <label data-i18n="paynow.nowDate">Today's date</label>
+          <input type="date" id="pn-now-date">
+        </div>
+        <div class="field">
+          <label data-i18n="paynow.laterAmount">Pay later</label>
+          <input type="number" id="pn-later" step="0.01" placeholder="1050.00">
+        </div>
+        <div class="field">
+          <label data-i18n="paynow.laterDate">Later date</label>
+          <input type="date" id="pn-later-date">
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:14px;">
+        <label data-i18n="paynow.expectLabel">Your expected return rate (annual, %)</label>
+        <div class="slider-row">
+          <input type="range" id="pn-expect" min="0" max="20" step="0.1" value="5">
+          <span class="slider-val" id="pn-expect-val">5.0%</span>
+        </div>
+      </div>
+
+      <div class="compute-row">
+        <button class="btn btn-primary" id="pn-compute" data-i18n="btn.compute">Compute</button>
+      </div>
+
+      <div id="pn-result"></div>
+
+      <details class="explain">
+        <summary data-i18n="explain.label">What does this mean?</summary>
+        <p data-i18n="paynow.explain">If "pay later" is bigger, the delay implies an interest rate the seller is charging. If you can earn <em>more</em> than that rate on your spare cash, take the delay. If less, pay now.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Scenario 5: Loan / Financing -->
+  <section class="scenario" data-scenario="loan">
+    <div class="card">
+      <div class="scenario-header">
+        <h2 data-i18n="loan.title">Loan / Financing Effective Rate</h2>
+        <div class="lede" data-i18n="loan.lede">Enter the principal received (positive) and the schedule of payments out (negative). The XIRR is the true annualized rate of this financing.</div>
+      </div>
+
+      <div class="cashflow-table">
+        <div class="cf-head">
+          <div data-i18n="col.date">Date</div>
+          <div data-i18n="loan.col">Amount (+ principal received, − payment)</div>
+          <div></div>
+        </div>
+        <div id="loan-rows"></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn" id="loan-add" data-i18n="btn.addRow">+ Add payment</button>
+        <button class="btn btn-ghost" id="loan-fill" data-i18n="btn.fillMonthly">Fill monthly payments…</button>
+      </div>
+
+      <div class="compute-row">
+        <button class="btn btn-primary" id="loan-compute" data-i18n="btn.computeRate">Compute effective rate</button>
+      </div>
+
+      <div id="loan-result"></div>
+
+      <details class="explain">
+        <summary data-i18n="explain.label">What does this mean?</summary>
+        <p data-i18n="loan.explain">A "0% APR with a fee" or "interest-free with processing charges" deal is rarely actually free. This computes the true annualized cost of money — useful for comparing 0%-with-fees, dealer financing, BNPL, and straight loans on equal footing.</p>
+      </details>
+    </div>
+  </section>
+
+  <div class="footer">
+    <span data-i18n="footer">Local computation · no backend · no tracking</span>
+  </div>
+
+</div>
+
+<script>
+/* ------------------------------------------------------------------ */
+/* i18n                                                                */
+/* ------------------------------------------------------------------ */
+const I18N = {
+  en: {
+    "title.suffix": "Cash-Flow Calculator",
+    "subtitle": "Annualized return · break-even rate · NPV · time-value of money",
+    "tab.plan": "Plan vs Lump",
+    "tab.xirr": "XIRR · Cash Flows",
+    "tab.npv": "NPV",
+    "tab.paynow": "Pay Now vs Later",
+    "tab.loan": "Loan / Financing",
+    "col.date": "Date",
+    "col.amount": "Amount",
+    "col.signedAmount": "Amount (− out, + in)",
+    "btn.addRow": "+ Add row",
+    "btn.toggleFee": "Toggle fee row",
+    "btn.compute": "Compute",
+    "btn.computeXirr": "Compute XIRR",
+    "btn.computeNpv": "Compute NPV",
+    "btn.computeRate": "Compute effective rate",
+    "btn.fillMonthly": "Fill monthly payments…",
+    "explain.label": "What does this mean?",
+    "plan.title": "Payment Plan vs Lump Sum",
+    "plan.lede": "At what annualized return rate does paying in installments break even with paying it all at once?",
+    "plan.instLabel": "Installment plan",
+    "plan.lumpLabel": "Lump-sum alternative",
+    "plan.computeHint": "Math: XIRR of (lump − plan) cash flows",
+    "plan.explain": "If your spare cash can earn <em>more</em> than the break-even rate elsewhere, the installment plan wins — you keep money working longer. If it can earn <em>less</em>, paying the lump sum is cheaper. The break-even is the annualized return rate at which the two paths have identical present value.",
+    "xirr.title": "XIRR — Annualized Return of Irregular Cash Flows",
+    "xirr.lede": "Negative = money out (investment / cost). Positive = money in (proceeds / income). Need at least one of each.",
+    "xirr.explain": "XIRR is the constant annualized rate at which the present value of all your cash flows sums to zero. It is Excel's <code>XIRR</code> — the standard way to measure return on an irregular series like dividend reinvestment, real-estate ownership, or staged investments.",
+    "npv.title": "NPV — Net Present Value",
+    "npv.lede": "Given a discount rate (your hurdle / opportunity cost), what is this stream worth today?",
+    "npv.rateLabel": "Discount rate (annual, %)",
+    "npv.refLabel": "Present-value reference date",
+    "npv.explain": "NPV &gt; 0 means the stream beats your hurdle rate — the investment is worth doing. NPV &lt; 0 means you would do better putting the money elsewhere at the discount rate you chose.",
+    "paynow.title": "Pay Now vs Pay Later",
+    "paynow.lede": "Pay $X today, or $Y on a future date. What annualized rate does the delay implicitly charge / give you?",
+    "paynow.nowAmount": "Pay now (today)",
+    "paynow.nowDate": "Today's date",
+    "paynow.laterAmount": "Pay later",
+    "paynow.laterDate": "Later date",
+    "paynow.expectLabel": "Your expected return rate (annual, %)",
+    "paynow.explain": "If \"pay later\" is bigger, the delay implies an interest rate the seller is charging. If you can earn <em>more</em> than that rate on your spare cash, take the delay. If less, pay now.",
+    "loan.title": "Loan / Financing Effective Rate",
+    "loan.lede": "Enter the principal received (positive) and the schedule of payments out (negative). The XIRR is the true annualized rate of this financing.",
+    "loan.col": "Amount (+ principal received, − payment)",
+    "loan.explain": "A \"0% APR with a fee\" or \"interest-free with processing charges\" deal is rarely actually free. This computes the true annualized cost of money — useful for comparing 0%-with-fees, dealer financing, BNPL, and straight loans on equal footing.",
+    "footer": "Local computation · no backend · no tracking",
+    "result.breakeven": "Break-even XIRR · 年化報酬率",
+    "result.xirr": "XIRR · 年化報酬率",
+    "result.npv": "Net Present Value",
+    "result.impliedRate": "Implied annualized rate",
+    "result.effRate": "Effective annualized rate",
+    "result.planTotal": "Plan total (nominal)",
+    "result.lumpTotal": "Lump total (nominal)",
+    "result.nominalDiff": "Nominal difference",
+    "result.invalid": "Need at least one outflow (−) and one inflow (+) on different dates.",
+    "result.noConverge": "Could not converge. Check that signs are mixed and dates differ.",
+    "rec.planWins": "If you can earn <strong>more than {rate}/year</strong> on spare cash, the installment plan wins. Below that, pay the lump sum.",
+    "rec.alwaysPlan": "The plan defers payment with no extra cost — it wins at any positive return rate. Pay the installments.",
+    "rec.alwaysLump": "The plan costs more in present value even at 0%. Pay the lump sum.",
+    "rec.npvPositive": "Positive NPV — the stream beats your {rate} hurdle.",
+    "rec.npvNegative": "Negative NPV — you'd be better off earning {rate} elsewhere.",
+    "rec.npvZero": "Roughly even with your hurdle rate.",
+    "rec.payDelay": "The \"pay later\" choice implies <strong>{rate}/year</strong>. Since you expect {exp}, ",
+    "rec.takeDelay": "<strong>take the delay</strong> — your cash works harder than the implied cost.",
+    "rec.payNow": "<strong>pay now</strong> — the implied cost outpaces your expected return.",
+    "rec.equal": "either way is roughly the same.",
+    "rec.loanRate": "True cost of this financing: <strong>{rate}/year</strong>.",
+    "sens.heading": "Sensitivity · Savings of plan vs lump at different return rates",
+    "sens.rate": "Return rate",
+    "sens.savings": "Plan savings (PV)",
+    "sens.verdict": "Verdict",
+    "verdict.planWins": "Plan wins",
+    "verdict.lumpWins": "Lump wins",
+    "verdict.even": "Break-even",
+    "fee.label": "Processing / setup fee",
+    "fee.placeholder": "Date · Amount",
+    "row.installment": "Installment",
+    "row.principal": "Principal received",
+    "row.payment": "Payment",
+    "fill.prompt": "How many monthly payments? (e.g. 12)",
+    "fill.amount": "Monthly payment amount?",
+    "fill.start": "Start date (first payment)?",
+  },
+  zh: {
+    "title.suffix": "現金流計算器",
+    "subtitle": "年化報酬率 · 損益兩平利率 · 現值 · 貨幣時間價值",
+    "tab.plan": "分期 vs 一次付清",
+    "tab.xirr": "XIRR · 現金流",
+    "tab.npv": "淨現值",
+    "tab.paynow": "現付 vs 延付",
+    "tab.loan": "貸款 / 分期費率",
+    "col.date": "日期",
+    "col.amount": "金額",
+    "col.signedAmount": "金額（− 流出, + 流入)",
+    "btn.addRow": "+ 新增一筆",
+    "btn.toggleFee": "切換手續費",
+    "btn.compute": "計算",
+    "btn.computeXirr": "計算 XIRR",
+    "btn.computeNpv": "計算淨現值",
+    "btn.computeRate": "計算實質利率",
+    "btn.fillMonthly": "自動填入每月分期…",
+    "explain.label": "這代表什麼？",
+    "plan.title": "分期付款 vs 一次付清",
+    "plan.lede": "在多少年化報酬率下，分期付款與一次付清的現值相等？",
+    "plan.instLabel": "分期付款計畫",
+    "plan.lumpLabel": "一次付清方案",
+    "plan.computeHint": "計算方式：(一次付清 − 分期付款) 的 XIRR",
+    "plan.explain": "如果你的閒置資金可以賺取<em>高於</em>損益兩平利率，分期勝出 — 因為錢可以在你手上多賺幾天利息。若<em>低於</em>，一次付清比較划算。損益兩平利率就是讓兩種付款方式現值相等的年化報酬率。",
+    "xirr.title": "XIRR — 不規則現金流的年化報酬率",
+    "xirr.lede": "負數 = 流出（投資 / 成本）。正數 = 流入（回收 / 收入）。至少各需一筆。",
+    "xirr.explain": "XIRR 是讓所有現金流現值總和為零的固定年化利率，等同於 Excel 的 <code>XIRR</code> 函數 — 衡量股息再投資、不動產持有、分批投資等不規則現金流回報的標準方法。",
+    "npv.title": "NPV — 淨現值",
+    "npv.lede": "在你指定的折現率（門檻 / 機會成本）下，這串現金流今天值多少？",
+    "npv.rateLabel": "折現率 (年化, %)",
+    "npv.refLabel": "現值基準日",
+    "npv.explain": "淨現值 &gt; 0 表示這串現金流超過你的門檻 — 值得投資。淨現值 &lt; 0 表示把錢放別處賺取折現率更划算。",
+    "paynow.title": "現在付 vs 之後付",
+    "paynow.lede": "今天付 X 元，或某個未來日期付 Y 元。延後付款隱含多少年化利率？",
+    "paynow.nowAmount": "現付金額",
+    "paynow.nowDate": "今日日期",
+    "paynow.laterAmount": "延後付金額",
+    "paynow.laterDate": "未來日期",
+    "paynow.expectLabel": "你的預期年化報酬率 (%)",
+    "paynow.explain": "若「之後付」金額較大，延後等於賣方在收利息。若你的閒置資金能賺<em>高於</em>此隱含利率，就選延後；反之則現付。",
+    "loan.title": "貸款 / 分期實質年利率",
+    "loan.lede": "輸入借到的本金（正值）與付出去的還款（負值）。XIRR 即此融資的真實年化利率。",
+    "loan.col": "金額（+ 借入本金, − 還款)",
+    "loan.explain": "「0% 利率＋手續費」、「免利息＋處理費」這類方案通常沒那麼免費。本工具計算真實年化資金成本 — 可用以同基準比較 0% 分期、車貸、先買後付（BNPL）、傳統貸款。",
+    "footer": "本地計算 · 無後端 · 無追蹤",
+    "result.breakeven": "損益兩平 XIRR · 年化報酬率",
+    "result.xirr": "XIRR · 年化報酬率",
+    "result.npv": "淨現值",
+    "result.impliedRate": "隱含年化利率",
+    "result.effRate": "實質年化利率",
+    "result.planTotal": "分期總額（名目）",
+    "result.lumpTotal": "一次付清總額（名目）",
+    "result.nominalDiff": "名目差額",
+    "result.invalid": "至少需要一筆流出 (−) 與一筆流入 (+)，且日期不同。",
+    "result.noConverge": "無法收斂。請檢查正負金額是否齊全、日期是否不同。",
+    "rec.planWins": "若閒置資金能賺<strong>每年高於 {rate}</strong>，分期勝出。低於則應選擇一次付清。",
+    "rec.alwaysPlan": "此分期方案無額外成本卻延後付款 — 任何正報酬率下都該選分期。",
+    "rec.alwaysLump": "即使 0% 報酬，分期的現值也較貴。應選一次付清。",
+    "rec.npvPositive": "正淨現值 — 此現金流贏過 {rate} 的門檻。",
+    "rec.npvNegative": "負淨現值 — 不如把錢放別處賺 {rate}。",
+    "rec.npvZero": "與門檻利率相當打平。",
+    "rec.payDelay": "「之後付」隱含<strong>每年 {rate}</strong>。你預期 {exp}，",
+    "rec.takeDelay": "<strong>應選擇延後付款</strong> — 你的閒置資金回報高於此隱含成本。",
+    "rec.payNow": "<strong>應該現在付</strong> — 隱含成本高於你的預期報酬。",
+    "rec.equal": "兩種選擇大致相同。",
+    "rec.loanRate": "此筆融資的真實成本：<strong>每年 {rate}</strong>。",
+    "sens.heading": "敏感度分析 · 不同報酬率下「分期 − 一次付清」的現值差",
+    "sens.rate": "報酬率",
+    "sens.savings": "分期節省 (現值)",
+    "sens.verdict": "結論",
+    "verdict.planWins": "分期勝出",
+    "verdict.lumpWins": "一次付清勝出",
+    "verdict.even": "打平",
+    "fee.label": "手續費 / 開辦費",
+    "fee.placeholder": "日期 · 金額",
+    "row.installment": "第 {n} 期",
+    "row.principal": "借入本金",
+    "row.payment": "還款",
+    "fill.prompt": "幾期每月分期？（例如 12）",
+    "fill.amount": "每期金額？",
+    "fill.start": "首期日期？",
+  }
+};
+
+let LANG = 'en';
+const t = (key, vars) => {
+  let s = (I18N[LANG] && I18N[LANG][key]) || I18N.en[key] || key;
+  if (vars) for (const k in vars) s = s.replace(new RegExp('\\{'+k+'\\}', 'g'), vars[k]);
+  return s;
+};
+
+function applyLang() {
+  document.documentElement.lang = LANG === 'zh' ? 'zh-Hant' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.innerHTML = t(el.getAttribute('data-i18n'));
+  });
+}
+
+document.querySelectorAll('.lang-toggle button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.lang-toggle button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    LANG = b.dataset.lang;
+    applyLang();
+    rerenderAllResults();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Currency                                                            */
+/* ------------------------------------------------------------------ */
+const CURRENCY_SYMBOLS = {
+  USD: '$', TWD: 'NT$', EUR: '€', JPY: '¥', GBP: '£', CNY: '¥', HKD: 'HK$'
+};
+let CURRENCY = 'USD';
+const cur = () => CURRENCY_SYMBOLS[CURRENCY] || '';
+const fmtMoney = (n) => {
+  if (!isFinite(n)) return '—';
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '−' : '';
+  const opts = (CURRENCY === 'JPY' || CURRENCY === 'TWD' || abs >= 10000)
+    ? { minimumFractionDigits: 0, maximumFractionDigits: 2 }
+    : { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+  return sign + cur() + abs.toLocaleString('en-US', opts);
+};
+const fmtPct = (r) => isFinite(r) ? (r * 100).toFixed(2) + '%' : '—';
+
+document.getElementById('currency').addEventListener('change', e => {
+  CURRENCY = e.target.value;
+  rerenderAllResults();
+});
+
+/* ------------------------------------------------------------------ */
+/* Date helpers                                                        */
+/* ------------------------------------------------------------------ */
+const DAY_MS = 86400000;
+const todayISO = () => new Date().toISOString().slice(0,10);
+const addMonthsISO = (iso, months) => {
+  const d = new Date(iso + 'T00:00:00');
+  const targetMonth = d.getMonth() + months;
+  const targetDate = new Date(d.getFullYear(), targetMonth, d.getDate());
+  // Handle month-end overflow
+  if (targetDate.getDate() !== d.getDate()) targetDate.setDate(0);
+  return targetDate.toISOString().slice(0,10);
+};
+const parseISO = (s) => new Date(s + 'T00:00:00');
+const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / DAY_MS);
+
+/* ------------------------------------------------------------------ */
+/* XIRR / NPV math                                                     */
+/* ------------------------------------------------------------------ */
+
+// flows: [{date: 'YYYY-MM-DD', amount: number}]
+// Returns NPV at the reference date (default: earliest date) at rate r (decimal).
+function xnpv(rate, flows, refDate) {
+  if (!flows.length) return 0;
+  const ref = refDate || flows.map(f => f.date).sort()[0];
+  let sum = 0;
+  for (const f of flows) {
+    const days = daysBetween(ref, f.date);
+    sum += f.amount / Math.pow(1 + rate, days / 365);
+  }
+  return sum;
+}
+
+function xnpvDeriv(rate, flows, refDate) {
+  if (!flows.length) return 0;
+  const ref = refDate || flows.map(f => f.date).sort()[0];
+  let sum = 0;
+  for (const f of flows) {
+    const days = daysBetween(ref, f.date);
+    const t = days / 365;
+    sum += -t * f.amount / Math.pow(1 + rate, t + 1);
+  }
+  return sum;
+}
+
+// XIRR via Newton's method with bisection fallback.
+// Returns annualized rate (decimal) or null on failure.
+function xirr(flows) {
+  if (flows.length < 2) return null;
+  const hasPos = flows.some(f => f.amount > 0);
+  const hasNeg = flows.some(f => f.amount < 0);
+  if (!hasPos || !hasNeg) return null;
+  const dates = flows.map(f => f.date);
+  if (new Set(dates).size < 2) return null;
+
+  const ref = dates.slice().sort()[0];
+
+  // Newton's method from several starting points.
+  const starts = [0.1, 0.0, 0.25, -0.1, 0.5, -0.25, 1.0, -0.5];
+  for (const start of starts) {
+    let r = start;
+    let ok = true;
+    for (let iter = 0; iter < 100; iter++) {
+      if (r <= -0.999) { ok = false; break; }
+      const f = xnpv(r, flows, ref);
+      if (Math.abs(f) < 1e-7) return r;
+      const df = xnpvDeriv(r, flows, ref);
+      if (!isFinite(df) || df === 0) { ok = false; break; }
+      const step = f / df;
+      const next = r - step;
+      if (!isFinite(next)) { ok = false; break; }
+      // Clamp step
+      const clamped = Math.max(-0.5, Math.min(0.5, next - r));
+      r = r + clamped;
+      if (Math.abs(clamped) < 1e-10) {
+        if (Math.abs(xnpv(r, flows, ref)) < 1e-5) return r;
+      }
+    }
+    if (ok && Math.abs(xnpv(r, flows, ref)) < 1e-5) return r;
+  }
+
+  // Bisection fallback: find sign change in [-0.99, 100].
+  let lo = -0.9999, hi = 100;
+  const f_lo = xnpv(lo, flows, ref);
+  const f_hi = xnpv(hi, flows, ref);
+  if (f_lo * f_hi > 0) {
+    // Try denser sampling to find a bracket
+    const samples = [];
+    for (let r = -0.95; r < 50; r += (r < 1 ? 0.05 : 1)) {
+      samples.push({ r, f: xnpv(r, flows, ref) });
+    }
+    let bracket = null;
+    for (let i = 0; i < samples.length - 1; i++) {
+      if (samples[i].f * samples[i+1].f < 0) {
+        bracket = [samples[i].r, samples[i+1].r];
+        break;
+      }
+    }
+    if (!bracket) return null;
+    lo = bracket[0]; hi = bracket[1];
+  }
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    const fm = xnpv(mid, flows, ref);
+    if (Math.abs(fm) < 1e-7 || (hi - lo) < 1e-10) return mid;
+    if (xnpv(lo, flows, ref) * fm < 0) hi = mid;
+    else lo = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tabs                                                                */
+/* ------------------------------------------------------------------ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.scenario').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelector('.scenario[data-scenario="'+btn.dataset.scenario+'"]').classList.add('active');
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Dynamic cash-flow row builder                                       */
+/* ------------------------------------------------------------------ */
+function makeRow(container, date, amount, placeholderAmt) {
+  const row = document.createElement('div');
+  row.className = 'cf-row';
+  row.innerHTML = `
+    <input type="date" value="${date || ''}">
+    <input type="number" step="0.01" value="${amount !== undefined && amount !== null ? amount : ''}" placeholder="${placeholderAmt || ''}">
+    <button class="row-remove" title="Remove" aria-label="Remove">×</button>
+  `;
+  row.querySelector('.row-remove').addEventListener('click', () => row.remove());
+  container.appendChild(row);
+  return row;
+}
+
+function getFlows(containerId) {
+  const rows = document.querySelectorAll('#' + containerId + ' .cf-row');
+  const flows = [];
+  rows.forEach(r => {
+    const inputs = r.querySelectorAll('input');
+    const date = inputs[0].value;
+    const amount = parseFloat(inputs[1].value);
+    if (date && isFinite(amount)) flows.push({ date, amount });
+  });
+  flows.sort((a, b) => a.date.localeCompare(b.date));
+  return flows;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scenario 1: Plan vs Lump                                            */
+/* ------------------------------------------------------------------ */
+const planRows = document.getElementById('plan-rows');
+const today = todayISO();
+
+// Default rows: a sample 5-installment plan + $30 fee
+function seedPlan() {
+  planRows.innerHTML = '';
+  makeRow(planRows, addMonthsISO(today, 1), 11200);
+  makeRow(planRows, addMonthsISO(today, 2), 11200);
+  makeRow(planRows, addMonthsISO(today, 3), 11200);
+  makeRow(planRows, addMonthsISO(today, 4), 11200);
+  makeRow(planRows, addMonthsISO(today, 5), 11200);
+  makeRow(planRows, addMonthsISO(today, 1), 30);  // fee on first installment date
+  document.getElementById('lump-date').value = today;
+  document.getElementById('lump-amount').value = 56030;
+}
+seedPlan();
+
+document.getElementById('plan-add').addEventListener('click', () => {
+  makeRow(planRows, addMonthsISO(today, planRows.children.length + 1), '');
+});
+document.getElementById('plan-fee-toggle').addEventListener('click', () => {
+  makeRow(planRows, today, 30);
+});
+
+let lastPlanCompute = null;
+
+document.getElementById('plan-compute').addEventListener('click', () => {
+  const plan = getFlows('plan-rows');
+  const lumpDate = document.getElementById('lump-date').value;
+  const lumpAmt = parseFloat(document.getElementById('lump-amount').value);
+  if (!plan.length || !lumpDate || !isFinite(lumpAmt)) {
+    showResult('plan-result', null, 'plan');
+    return;
+  }
+  // Differential: choosing plan vs lump
+  // Lump outflow on lumpDate (you "saved" by not lumping → +lumpAmt at lumpDate)
+  // Plan outflows on each plan date → -planAmt at each
+  const diff = [];
+  diff.push({ date: lumpDate, amount: lumpAmt });
+  for (const f of plan) diff.push({ date: f.date, amount: -f.amount });
+  // Aggregate same-date entries
+  const merged = {};
+  for (const f of diff) merged[f.date] = (merged[f.date] || 0) + f.amount;
+  const mergedFlows = Object.entries(merged).map(([date, amount]) => ({ date, amount }));
+  mergedFlows.sort((a, b) => a.date.localeCompare(b.date));
+
+  const planTotal = plan.reduce((s, f) => s + f.amount, 0);
+  const nominalDiff = planTotal - lumpAmt;
+
+  const r = xirr(mergedFlows);
+  lastPlanCompute = { plan, lumpDate, lumpAmt, mergedFlows, r, planTotal, nominalDiff };
+  renderPlanResult();
+});
+
+function renderPlanResult() {
+  if (!lastPlanCompute) return;
+  const { plan, lumpDate, lumpAmt, mergedFlows, r, planTotal, nominalDiff } = lastPlanCompute;
+  const box = document.getElementById('plan-result');
+  const sensBox = document.getElementById('plan-sensitivity');
+
+  // Determine which side wins at r=0 (i.e. nominal cost) and at small positive r
+  const npvAtZero = xnpv(0, mergedFlows);
+  const npvAtSmall = xnpv(0.001, mergedFlows);
+
+  let recHTML;
+  let displayRate = r;
+  if (r === null) {
+    if (npvAtSmall > 0.01) recHTML = t('rec.alwaysPlan');
+    else if (npvAtSmall < -0.01) recHTML = t('rec.alwaysLump');
+    else recHTML = t('result.noConverge');
+  } else if (Math.abs(r) < 5e-5) {
+    // Break-even is effectively zero — decide by which side benefits from positive rate
+    if (npvAtSmall > 0.01) {
+      displayRate = 0;
+      recHTML = t('rec.alwaysPlan');
+    } else if (npvAtSmall < -0.01) {
+      displayRate = 0;
+      recHTML = t('rec.alwaysLump');
+    } else {
+      recHTML = t('rec.planWins', { rate: fmtPct(r) });
+    }
+  } else {
+    recHTML = t('rec.planWins', { rate: fmtPct(r) });
+  }
+
+  box.innerHTML = `
+    <div class="result-card">
+      <div class="label">${t('result.breakeven')}</div>
+      <div class="value">${r === null ? '—' : fmtPct(displayRate)}</div>
+      <div class="interp">${recHTML}</div>
+    </div>
+    <div class="secondary-result">
+      <div class="chip"><div class="k">${t('result.planTotal')}</div><div class="v">${fmtMoney(planTotal)}</div></div>
+      <div class="chip"><div class="k">${t('result.lumpTotal')}</div><div class="v">${fmtMoney(lumpAmt)}</div></div>
+      <div class="chip ${nominalDiff > 0 ? 'bad' : nominalDiff < 0 ? 'good' : ''}">
+        <div class="k">${t('result.nominalDiff')}</div>
+        <div class="v">${nominalDiff > 0 ? '+' : ''}${fmtMoney(nominalDiff)}</div>
+      </div>
+    </div>
+  `;
+
+  // Sensitivity table
+  const rates = [0, 0.03, 0.05, 0.08, 0.10, 0.15];
+  const rows = rates.map(rr => {
+    const npv = xnpv(rr, mergedFlows);
+    const verdictKey = npv > 0.5 ? 'verdict.planWins' : npv < -0.5 ? 'verdict.lumpWins' : 'verdict.even';
+    const cls = npv > 0.5 ? 'gain' : npv < -0.5 ? 'loss' : '';
+    return `<tr class="${cls}">
+      <td>${(rr*100).toFixed(0)}%</td>
+      <td>${npv > 0 ? '+' : ''}${fmtMoney(npv)}</td>
+      <td>${t(verdictKey)}</td>
+    </tr>`;
+  }).join('');
+  sensBox.innerHTML = `
+    <div class="card" style="margin-top:18px;">
+      <h2 style="font-size:15px;">${t('sens.heading')}</h2>
+      <table class="sensitivity">
+        <tr><th>${t('sens.rate')}</th><th>${t('sens.savings')}</th><th>${t('sens.verdict')}</th></tr>
+        ${rows}
+      </table>
+      ${r !== null && r >= 0 && r <= 0.50 ? `
+        <table class="sensitivity" style="margin-top:8px;">
+          <tr class="threshold"><td>${fmtPct(r)}</td><td>${fmtMoney(0)}</td><td>${t('verdict.even')}</td></tr>
+        </table>
+      ` : ''}
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scenario 2: XIRR                                                    */
+/* ------------------------------------------------------------------ */
+const xirrRows = document.getElementById('xirr-rows');
+function seedXirr() {
+  xirrRows.innerHTML = '';
+  makeRow(xirrRows, today, -10000);
+  makeRow(xirrRows, addMonthsISO(today, 6), -2000);
+  makeRow(xirrRows, addMonthsISO(today, 12), 13500);
+}
+seedXirr();
+
+document.getElementById('xirr-add').addEventListener('click', () => {
+  makeRow(xirrRows, addMonthsISO(today, xirrRows.children.length * 3), '');
+});
+
+let lastXirrCompute = null;
+document.getElementById('xirr-compute').addEventListener('click', () => {
+  const flows = getFlows('xirr-rows');
+  const r = xirr(flows);
+  lastXirrCompute = { flows, r };
+  renderXirrResult();
+});
+
+function renderXirrResult() {
+  if (!lastXirrCompute) return;
+  const { flows, r } = lastXirrCompute;
+  const box = document.getElementById('xirr-result');
+  if (r === null) {
+    box.innerHTML = `<div class="result-card error"><div class="label">${t('result.xirr')}</div><div class="value">${t('result.invalid')}</div></div>`;
+    return;
+  }
+  const total = flows.reduce((s, f) => s + f.amount, 0);
+  box.innerHTML = `
+    <div class="result-card">
+      <div class="label">${t('result.xirr')}</div>
+      <div class="value">${fmtPct(r)}</div>
+    </div>
+    <div class="secondary-result">
+      <div class="chip ${total >= 0 ? 'good' : 'bad'}">
+        <div class="k">${LANG === 'zh' ? '名目總計' : 'Nominal sum'}</div>
+        <div class="v">${total >= 0 ? '+' : ''}${fmtMoney(total)}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scenario 3: NPV                                                     */
+/* ------------------------------------------------------------------ */
+const npvRows = document.getElementById('npv-rows');
+function seedNpv() {
+  npvRows.innerHTML = '';
+  makeRow(npvRows, today, -50000);
+  makeRow(npvRows, addMonthsISO(today, 12), 18000);
+  makeRow(npvRows, addMonthsISO(today, 24), 18000);
+  makeRow(npvRows, addMonthsISO(today, 36), 18000);
+  document.getElementById('npv-ref').value = today;
+}
+seedNpv();
+
+document.getElementById('npv-add').addEventListener('click', () => {
+  makeRow(npvRows, addMonthsISO(today, npvRows.children.length * 12), '');
+});
+
+let lastNpvCompute = null;
+document.getElementById('npv-compute').addEventListener('click', () => {
+  const flows = getFlows('npv-rows');
+  const rate = parseFloat(document.getElementById('npv-rate').value) / 100;
+  const ref = document.getElementById('npv-ref').value || flows[0]?.date;
+  if (!flows.length || !isFinite(rate) || !ref) return;
+  const npv = xnpv(rate, flows, ref);
+  lastNpvCompute = { npv, rate };
+  renderNpvResult();
+});
+
+function renderNpvResult() {
+  if (!lastNpvCompute) return;
+  const { npv, rate } = lastNpvCompute;
+  const box = document.getElementById('npv-result');
+  const rateStr = fmtPct(rate);
+  let rec;
+  if (npv > 0.5) rec = t('rec.npvPositive', { rate: rateStr });
+  else if (npv < -0.5) rec = t('rec.npvNegative', { rate: rateStr });
+  else rec = t('rec.npvZero');
+  box.innerHTML = `
+    <div class="result-card">
+      <div class="label">${t('result.npv')} @ ${rateStr}</div>
+      <div class="value">${(npv >= 0 ? '+' : '')}${fmtMoney(npv)}</div>
+      <div class="interp">${rec}</div>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scenario 4: Pay Now vs Pay Later                                    */
+/* ------------------------------------------------------------------ */
+document.getElementById('pn-now-date').value = today;
+document.getElementById('pn-later-date').value = addMonthsISO(today, 12);
+document.getElementById('pn-now').value = 1000;
+document.getElementById('pn-later').value = 1050;
+
+const pnExpect = document.getElementById('pn-expect');
+const pnExpectVal = document.getElementById('pn-expect-val');
+pnExpect.addEventListener('input', () => {
+  pnExpectVal.textContent = (+pnExpect.value).toFixed(1) + '%';
+  if (lastPnCompute) renderPnResult();
+});
+
+let lastPnCompute = null;
+document.getElementById('pn-compute').addEventListener('click', () => {
+  const nowAmt = parseFloat(document.getElementById('pn-now').value);
+  const nowDate = document.getElementById('pn-now-date').value;
+  const laterAmt = parseFloat(document.getElementById('pn-later').value);
+  const laterDate = document.getElementById('pn-later-date').value;
+  if (!isFinite(nowAmt) || !isFinite(laterAmt) || !nowDate || !laterDate) return;
+  // Choosing "pay later": at nowDate, +nowAmt saved; at laterDate, -laterAmt paid
+  const flows = [
+    { date: nowDate, amount: nowAmt },
+    { date: laterDate, amount: -laterAmt }
+  ];
+  const r = xirr(flows);
+  lastPnCompute = { r, nowAmt, laterAmt, nowDate, laterDate };
+  renderPnResult();
+});
+
+function renderPnResult() {
+  if (!lastPnCompute) return;
+  const { r } = lastPnCompute;
+  const exp = (+pnExpect.value) / 100;
+  const box = document.getElementById('pn-result');
+  if (r === null) {
+    box.innerHTML = `<div class="result-card error"><div class="value">${t('result.noConverge')}</div></div>`;
+    return;
+  }
+  let rec = t('rec.payDelay', { rate: fmtPct(r), exp: fmtPct(exp) });
+  if (exp > r + 0.0005) rec += t('rec.takeDelay');
+  else if (exp < r - 0.0005) rec += t('rec.payNow');
+  else rec += t('rec.equal');
+  box.innerHTML = `
+    <div class="result-card">
+      <div class="label">${t('result.impliedRate')}</div>
+      <div class="value">${fmtPct(r)}</div>
+      <div class="interp">${rec}</div>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scenario 5: Loan / Financing                                        */
+/* ------------------------------------------------------------------ */
+const loanRows = document.getElementById('loan-rows');
+function seedLoan() {
+  loanRows.innerHTML = '';
+  makeRow(loanRows, today, 10000);
+  for (let i = 1; i <= 12; i++) makeRow(loanRows, addMonthsISO(today, i), -875);
+}
+seedLoan();
+
+document.getElementById('loan-add').addEventListener('click', () => {
+  makeRow(loanRows, addMonthsISO(today, loanRows.children.length), '');
+});
+
+document.getElementById('loan-fill').addEventListener('click', () => {
+  const n = parseInt(prompt(t('fill.prompt'), '12'));
+  if (!n || n < 1) return;
+  const amt = parseFloat(prompt(t('fill.amount'), '875'));
+  if (!isFinite(amt)) return;
+  const start = prompt(t('fill.start'), addMonthsISO(today, 1));
+  if (!start) return;
+  for (let i = 0; i < n; i++) makeRow(loanRows, addMonthsISO(start, i), -Math.abs(amt));
+});
+
+let lastLoanCompute = null;
+document.getElementById('loan-compute').addEventListener('click', () => {
+  const flows = getFlows('loan-rows');
+  const r = xirr(flows);
+  lastLoanCompute = { flows, r };
+  renderLoanResult();
+});
+
+function renderLoanResult() {
+  if (!lastLoanCompute) return;
+  const { flows, r } = lastLoanCompute;
+  const box = document.getElementById('loan-result');
+  if (r === null) {
+    box.innerHTML = `<div class="result-card error"><div class="value">${t('result.invalid')}</div></div>`;
+    return;
+  }
+  const principal = flows.filter(f => f.amount > 0).reduce((s, f) => s + f.amount, 0);
+  const paid = -flows.filter(f => f.amount < 0).reduce((s, f) => s + f.amount, 0);
+  box.innerHTML = `
+    <div class="result-card">
+      <div class="label">${t('result.effRate')}</div>
+      <div class="value">${fmtPct(r)}</div>
+      <div class="interp">${t('rec.loanRate', { rate: fmtPct(r) })}</div>
+    </div>
+    <div class="secondary-result">
+      <div class="chip"><div class="k">${LANG === 'zh' ? '本金' : 'Principal'}</div><div class="v">${fmtMoney(principal)}</div></div>
+      <div class="chip"><div class="k">${LANG === 'zh' ? '還款總額' : 'Total paid'}</div><div class="v">${fmtMoney(paid)}</div></div>
+      <div class="chip ${paid - principal > 0 ? 'bad' : 'good'}">
+        <div class="k">${LANG === 'zh' ? '利息成本' : 'Interest cost'}</div>
+        <div class="v">${fmtMoney(paid - principal)}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ */
+/* Re-render results on language / currency change                     */
+/* ------------------------------------------------------------------ */
+function rerenderAllResults() {
+  if (lastPlanCompute) renderPlanResult();
+  if (lastXirrCompute) renderXirrResult();
+  if (lastNpvCompute) renderNpvResult();
+  if (lastPnCompute) renderPnResult();
+  if (lastLoanCompute) renderLoanResult();
+}
+
+applyLang();
+</script>
+</body>
+</html>
