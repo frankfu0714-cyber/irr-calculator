@@ -467,6 +467,77 @@
     color: var(--accent-ink);
     font-variant-numeric: tabular-nums;
   }
+
+  .quickfill {
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .qf-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .qf-label {
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    min-width: 60px;
+  }
+  .qf-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    flex: 1;
+  }
+  .chip-btn {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-soft);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+    white-space: nowrap;
+  }
+  .chip-btn:hover {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    border-color: var(--accent-soft);
+  }
+  .chip-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .chip-input {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    font-family: inherit;
+    width: 78px;
+    text-align: center;
+    color: var(--ink);
+  }
+  .chip-input:focus { outline: none; border-color: var(--accent); }
+  .qf-generate {
+    align-self: flex-start;
+    padding: 7px 18px;
+    font-size: 12.5px;
+  }
 </style>
 </head>
 <body>
@@ -512,6 +583,30 @@
       </div>
 
       <h3 style="font-size:13px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-weight:600;" data-i18n="plan.instLabel">Installment plan</h3>
+
+      <div class="quickfill">
+        <div class="qf-row">
+          <span class="qf-label" data-i18n="qf.term">Term</span>
+          <div class="qf-chips" data-group="term" data-target="plan">
+            <button type="button" class="chip-btn active" data-term="12">12 mo</button>
+            <button type="button" class="chip-btn" data-term="24">24 mo</button>
+            <button type="button" class="chip-btn" data-term="36">36 mo</button>
+            <button type="button" class="chip-btn" data-term="48">48 mo</button>
+            <button type="button" class="chip-btn" data-term="60">60 mo</button>
+            <input type="number" class="chip-input" data-custom-term placeholder="N" min="1" max="600">
+          </div>
+        </div>
+        <div class="qf-row">
+          <span class="qf-label" data-i18n="qf.timing">Timing</span>
+          <div class="qf-chips" data-group="timing" data-target="plan">
+            <button type="button" class="chip-btn active" data-timing="same" data-i18n="qf.sameDay">Same day each month</button>
+            <button type="button" class="chip-btn" data-timing="eom" data-i18n="qf.eom">End of month</button>
+            <button type="button" class="chip-btn" data-timing="bom" data-i18n="qf.bom">Beginning of month</button>
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary qf-generate" data-generate="plan" data-i18n="qf.generate">Generate schedule</button>
+      </div>
+
       <div class="cashflow-table">
         <div class="cf-head">
           <div data-i18n="col.date">Date</div>
@@ -685,6 +780,29 @@
         <div class="lede" data-i18n="loan.lede">Enter the principal received (positive) and the schedule of payments out (negative). The XIRR is the true annualized rate of this financing.</div>
       </div>
 
+      <div class="quickfill">
+        <div class="qf-row">
+          <span class="qf-label" data-i18n="qf.term">Term</span>
+          <div class="qf-chips" data-group="term" data-target="loan">
+            <button type="button" class="chip-btn active" data-term="12">12 mo</button>
+            <button type="button" class="chip-btn" data-term="24">24 mo</button>
+            <button type="button" class="chip-btn" data-term="36">36 mo</button>
+            <button type="button" class="chip-btn" data-term="48">48 mo</button>
+            <button type="button" class="chip-btn" data-term="60">60 mo</button>
+            <input type="number" class="chip-input" data-custom-term placeholder="N" min="1" max="600">
+          </div>
+        </div>
+        <div class="qf-row">
+          <span class="qf-label" data-i18n="qf.timing">Timing</span>
+          <div class="qf-chips" data-group="timing" data-target="loan">
+            <button type="button" class="chip-btn active" data-timing="same" data-i18n="qf.sameDay">Same day each month</button>
+            <button type="button" class="chip-btn" data-timing="eom" data-i18n="qf.eom">End of month</button>
+            <button type="button" class="chip-btn" data-timing="bom" data-i18n="qf.bom">Beginning of month</button>
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary qf-generate" data-generate="loan" data-i18n="qf.generate">Generate schedule</button>
+      </div>
+
       <div class="cashflow-table">
         <div class="cf-head">
           <div data-i18n="col.date">Date</div>
@@ -695,7 +813,6 @@
       </div>
       <div class="row-actions">
         <button class="btn" id="loan-add" data-i18n="btn.addRow">+ Add payment</button>
-        <button class="btn btn-ghost" id="loan-fill" data-i18n="btn.fillMonthly">Fill monthly payments…</button>
       </div>
 
       <div class="compute-row">
@@ -804,6 +921,14 @@ const I18N = {
     "fill.prompt": "How many monthly payments? (e.g. 12)",
     "fill.amount": "Monthly payment amount?",
     "fill.start": "Start date (first payment)?",
+    "qf.term": "Term",
+    "qf.timing": "Timing",
+    "qf.sameDay": "Same day each month",
+    "qf.eom": "End of month",
+    "qf.bom": "Beginning of month",
+    "qf.generate": "Generate schedule",
+    "qf.needLump": "Please fill in the lump-sum date and amount below first.",
+    "qf.needPrincipal": "Please enter the principal (positive amount + date) on the first row first.",
   },
   zh: {
     "title.suffix": "現金流計算器",
@@ -887,6 +1012,14 @@ const I18N = {
     "fill.prompt": "幾期每月分期？（例如 12）",
     "fill.amount": "每期金額？",
     "fill.start": "首期日期？",
+    "qf.term": "期數",
+    "qf.timing": "日期",
+    "qf.sameDay": "每月同一日",
+    "qf.eom": "月底",
+    "qf.bom": "月初",
+    "qf.generate": "產生分期表",
+    "qf.needLump": "請先在下方填入「一次付清」的日期與金額。",
+    "qf.needPrincipal": "請先在第一列填入借入本金（正值）與日期。",
   }
 };
 
@@ -1385,15 +1518,123 @@ document.getElementById('loan-add').addEventListener('click', () => {
   makeRow(loanRows, addMonthsISO(today, loanRows.children.length), '');
 });
 
-document.getElementById('loan-fill').addEventListener('click', () => {
-  const n = parseInt(prompt(t('fill.prompt'), '12'));
-  if (!n || n < 1) return;
-  const amt = parseFloat(prompt(t('fill.amount'), '875'));
-  if (!isFinite(amt)) return;
-  const start = prompt(t('fill.start'), addMonthsISO(today, 1));
-  if (!start) return;
-  for (let i = 0; i < n; i++) makeRow(loanRows, addMonthsISO(start, i), -Math.abs(amt));
+/* ------------------------------------------------------------------ */
+/* Quick-fill: term presets + timing for Plan and Loan                 */
+/* ------------------------------------------------------------------ */
+const qfState = {
+  plan: { term: 12, timing: 'same' },
+  loan: { term: 12, timing: 'same' }
+};
+
+document.querySelectorAll('.qf-chips').forEach(group => {
+  const target = group.dataset.target;
+  const groupType = group.dataset.group;
+  group.querySelectorAll('.chip-btn').forEach(chip => {
+    chip.addEventListener('click', () => {
+      group.querySelectorAll('.chip-btn').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      if (groupType === 'term') {
+        qfState[target].term = parseInt(chip.dataset.term);
+        const customInput = group.querySelector('.chip-input');
+        if (customInput) customInput.value = '';
+      } else if (groupType === 'timing') {
+        qfState[target].timing = chip.dataset.timing;
+      }
+    });
+  });
+  const customInput = group.querySelector('.chip-input');
+  if (customInput) {
+    customInput.addEventListener('input', () => {
+      const n = parseInt(customInput.value);
+      if (n > 0 && n <= 600) {
+        group.querySelectorAll('.chip-btn').forEach(c => c.classList.remove('active'));
+        qfState[target].term = n;
+      }
+    });
+  }
 });
+
+function lastDayOfMonth(year, month0) {
+  return new Date(year, month0 + 1, 0).getDate();
+}
+
+function isoLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+function generateScheduleDates(startISO, n, timing) {
+  const start = parseISO(startISO);
+  const startY = start.getFullYear();
+  const startM = start.getMonth();
+  const startD = start.getDate();
+  const dates = [];
+  for (let i = 1; i <= n; i++) {
+    let d;
+    if (timing === 'eom') {
+      // Last day of (startMonth + i): create day 0 of (startMonth + i + 1)
+      d = new Date(startY, startM + i + 1, 0);
+    } else if (timing === 'bom') {
+      // 1st of (startMonth + i)
+      d = new Date(startY, startM + i, 1);
+    } else {
+      // Same day, clamped to month length
+      const last = lastDayOfMonth(startY, startM + i);
+      d = new Date(startY, startM + i, Math.min(startD, last));
+    }
+    dates.push(isoLocal(d));
+  }
+  return dates;
+}
+
+document.querySelectorAll('[data-generate]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.generate;
+    const { term, timing } = qfState[target];
+    if (target === 'plan') generatePlanSchedule(term, timing);
+    else if (target === 'loan') generateLoanSchedule(term, timing);
+  });
+});
+
+function generatePlanSchedule(n, timing) {
+  const lumpDate = document.getElementById('lump-date').value;
+  const lumpAmt = parseFloat(document.getElementById('lump-amount').value);
+  if (!lumpDate || !isFinite(lumpAmt)) {
+    alert(t('qf.needLump'));
+    return;
+  }
+  const dates = generateScheduleDates(lumpDate, n, timing);
+  const perPayment = Math.round((lumpAmt / n) * 100) / 100;
+  planRows.innerHTML = '';
+  dates.forEach(d => makeRow(planRows, d, perPayment));
+}
+
+function generateLoanSchedule(n, timing) {
+  const rows = Array.from(loanRows.querySelectorAll('.cf-row'));
+  let principal = null;
+  let principalDate = null;
+  for (const row of rows) {
+    const inputs = row.querySelectorAll('input');
+    const date = inputs[0].value;
+    const amount = parseFloat(inputs[1].value);
+    if (date && isFinite(amount) && amount > 0) {
+      principal = amount;
+      principalDate = date;
+      break;
+    }
+  }
+  if (!principal || !principalDate) {
+    alert(t('qf.needPrincipal'));
+    return;
+  }
+  const dates = generateScheduleDates(principalDate, n, timing);
+  const perPayment = Math.round((principal / n) * 100) / 100;
+  loanRows.innerHTML = '';
+  makeRow(loanRows, principalDate, principal);
+  dates.forEach(d => makeRow(loanRows, d, -perPayment));
+}
 
 let lastLoanCompute = null;
 document.getElementById('loan-compute').addEventListener('click', () => {
